@@ -2,7 +2,7 @@
 	"name": "repath",
 	"displayName": "RePath Roblox",
 	"description": "Makes moving module scripts easier",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "SackBart",
 	"icon": "Icon.png",
 	"repository": {
@@ -21,7 +21,12 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": []
+		"commands": [
+			{
+				"command": "repath.createIgnore",
+				"title": "Create a .repathignore File"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -39,7 +44,6 @@
 		"typescript-eslint": "^8.26.0"
 	},
 	"dependencies": {
-		"axios": "^1.13.5",
-		"fast-xml-parser": "^5.3.5"
+		"ignore": "^7.0.5"
 	}
 }

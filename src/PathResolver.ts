@@ -37,11 +37,8 @@ function findPathInTree(tree: any, targetPath: string, currentPath: string[] = [
 function getProjectJson(workspaceFolder: vscode.WorkspaceFolder): any | null {
     try {
         const workspaceRoot = workspaceFolder.uri.fsPath;
-        console.log(`workspaceRoot path: ${workspaceRoot}`)
+        console.log(`workspaceRoot path: ${workspaceRoot}`);
         const files = fs.readdirSync(workspaceRoot);
-        for (const file in files) {
-            console.log(`Paths: ${file}`)
-        }
         const projectJsonFile = files.find(file => file.endsWith('.project.json'));
 
         if (projectJsonFile) {
