@@ -5,7 +5,26 @@ All notable changes to the "RePath Roblox" extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (suggestions to add?)
+## [0.0.5] - Multiple file movement
+
+### Added
+- Feature to move (multiple) Folders and scripts
+
+### Changed
+- All changed files will be saved in an array which then will process all
+individual changes one by one
+
+### Removed
+- .lua/.luau requirement on changed files
+
+
+## [0.0.4] - Hotfix
+
+### Added
+- A dependency necessary for the `.repathignore` to work
+
+
+## [0.0.3] - .repathignore
 
 ### Added
 
@@ -30,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unused dependencies: `axios`, `fast-xml-parser`
 - Debug logging loop in `getProjectJson()`
 
-## [0.0.2] - Previous Release (you've create)
+## [0.0.2] - Previous Release
 
 ### Added
 
@@ -39,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handling of .server, .client, .shared suffixes
 - Support for init files
 
-## [0.0.1] - Initial Release (you've create)
+## [0.0.1] - Initial Release
 
 ### Added
 
