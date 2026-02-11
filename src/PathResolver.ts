@@ -37,7 +37,11 @@ function findPathInTree(tree: any, targetPath: string, currentPath: string[] = [
 function getProjectJson(workspaceFolder: vscode.WorkspaceFolder): any | null {
     try {
         const workspaceRoot = workspaceFolder.uri.fsPath;
+        console.log(`workspaceRoot path: ${workspaceRoot}`)
         const files = fs.readdirSync(workspaceRoot);
+        for (const file in files) {
+            console.log(`Paths: ${file}`)
+        }
         const projectJsonFile = files.find(file => file.endsWith('.project.json'));
 
         if (projectJsonFile) {
@@ -57,11 +61,8 @@ function getProjectJson(workspaceFolder: vscode.WorkspaceFolder): any | null {
 }
 
 export function convertToRobloxPath(filePath: string, workspaceFolder?: vscode.WorkspaceFolder): string {
-    console.log(`[convertToRobloxPath] Starting conversion for file path: ${filePath}`);
-    let normalizedPath = filePath.replace(/\\/g, '/');
-
-    const dir = path.dirname(normalizedPath);
-    const filename = path.basename(normalizedPath);
+    const dir = path.dirname(filePath);
+    const filename = path.basename(filePath);
     console.log(`[convertToRobloxPath] Directory: ${dir}, Filename: ${filename}`);
 
     let moduleName = filename;

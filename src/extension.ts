@@ -1,19 +1,9 @@
 import * as vscode from 'vscode';
 import { convertToRobloxPath } from './PathResolver';
+import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Active');
-
-	const disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-
-
-
-		vscode.window.showInformationMessage('Hello World!');
-	});
-
-	context.subscriptions.push(disposable);
+	console.log('RePath Is Online');
 
 	vscode.workspace.onDidRenameFiles(async (e) => {
 		const workspaceEdit = new vscode.WorkspaceEdit();
@@ -22,19 +12,37 @@ export function activate(context: vscode.ExtensionContext) {
 		for (const file of e.files) {
 			if (!file.oldUri.fsPath.match(/\.luau?$/)) { continue; }
 
-			const oldRobloxPath = convertToRobloxPath(file.oldUri.fsPath);
-			const newRobloxPath = convertToRobloxPath(file.newUri.fsPath);
+			const workspaceFolder = vscode.workspace.getWorkspaceFolder(file.oldUri);
+
+			if (!workspaceFolder) {
+				console.log("[RePath] Not within the workspace folder");
+				vscode.window.showErrorMessage("RePath: Not within the workspace folder");
+				return;
+			}
+
+			const relativePathOld = path.relative(workspaceFolder.uri.fsPath, file.oldUri.fsPath);
+			const relativePathNew = path.relative(workspaceFolder.uri.fsPath, file.newUri.fsPath);
+
+			const normalizedOld = relativePathOld.replace(/\\/g, '/');
+			const normalizedNew = relativePathNew.replace(/\\/g, '/');
+
+			const oldRobloxPath = convertToRobloxPath(normalizedOld, workspaceFolder);
+			const newRobloxPath = convertToRobloxPath(normalizedNew, workspaceFolder);
 
 			if (oldRobloxPath && newRobloxPath && oldRobloxPath != newRobloxPath) {
-				console.log(`Refactor: ${oldRobloxPath} -> ${newRobloxPath}`);
+				console.log(`[RePath] Refactor: ${oldRobloxPath} -> ${newRobloxPath}`);
 
 				changeCount += await performRefactoring(oldRobloxPath, newRobloxPath, workspaceEdit);
 			}
 		}
 
 		if (changeCount > 0) {
-			await vscode.workspace.applyEdit(workspaceEdit);
-			vscode.window.showInformationMessage(`Refactoring: ${changeCount} paths updated`);
+			const success = await vscode.workspace.applyEdit(workspaceEdit);
+			if (success) {
+				vscode.window.showInformationMessage(`RePath: Applied new path on ${changeCount} file` + (changeCount == 1 ? "" : "s"));
+			} else {
+				vscode.window.showErrorMessage("RePath: Couldn't refactor the paths")
+			}
 		}
 	})
 }
@@ -44,36 +52,97 @@ async function performRefactoring(
 	newPath: string,
 	edit: vscode.WorkspaceEdit
 ): Promise<number> {
-	const files = await vscode.workspace.findFiles('**/*.{lua.luau}', '**/node_modules/**');
-	let count = 0;
+	const files = await vscode.workspace.findFiles('**/*.{lua,luau}', '**/node_modules/**')
 
-	const escapedOldPath = oldPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-	const regex = new RegExp(escapedOldPath, 'g')
+	let count = 0
 
 	for (const fileUri of files) {
-		try {
-			const document = await vscode.workspace.openTextDocument(fileUri);
-			const text = document.getText();
+		console.log(`[RePath] Looking at file ${fileUri.fsPath}`)
+		const document = await vscode.workspace.openTextDocument(fileUri)
+		const text = document.getText()
 
-			let match;
-			while ((match = regex.exec(text)) !== null) {
-				const startPos = document.positionAt(match.index);
-				const endPos = document.positionAt(match.index + match[0].length);
+		// Get the services and the path suffixes from the given paths
+		const serviceRegex = /^game:GetService\("([^"]+)"\)(.*)$/;
+		const matchOld = oldPath.match(serviceRegex);
+		const matchNew = newPath.match(serviceRegex);
 
-				// Validierung: Prüfen, ob das Zeichen DANACH ein Punkt oder Buchstabe ist.
-				// Wenn wir "Module" ersetzen, wollen wir nicht "Module2" ersetzen.
-				const charAfter = text.charAt(match.index + match[0].length);
-				if (/[a-zA-Z0-9_]/.test(charAfter)) {
-					continue; // Es ist Teil eines längeren Namens, überspringen
-				}
+		if (!matchOld || !matchNew) {
+			console.error("[RePath] Path is not in correct Format");
+			continue;
+		}
 
-				edit.replace(fileUri, new vscode.Range(startPos, endPos), newPath);
-				count++;
+		const oldServiceName = matchOld[1]
+		const oldPathSuffix = matchOld[2]
+		const newServiceName = matchNew[1]
+		const newPathSuffix = matchNew[2]
+
+		// Get the variables that require the services
+		const oldServiceRegex = new RegExp(`local\\s+([a-zA-Z_]\\w*)\\s*=\\s*game:GetService\\("${oldServiceName}"\\)`);
+		const newServiceRegex = new RegExp(`local\\s+([a-zA-Z_]\\w*)\\s*=\\s*game:GetService\\("${newServiceName}"\\)`);
+
+		const matchOldVariable = oldServiceRegex.exec(text);
+		const matchNewVariable = newServiceRegex.exec(text);
+
+		let oldServiceVariable
+		let newServiceVariable
+
+		if (matchOldVariable) {
+			oldServiceVariable = matchOldVariable[1]
+		}
+		if (matchNewVariable) {
+			newServiceVariable = matchNewVariable[1]
+		}
+
+		// Look for the path that contains oldVariable.oldPathSuffix or game:GetService("oldServiceName").oldPathSuffix
+		if (oldServiceVariable != null && text.includes(oldServiceVariable + oldPathSuffix)) { // Case 1: Variable requiring Service which is then used inside require() 
+			// Old Variable has been used
+			// Replace path
+			const oldGivenPath = oldServiceVariable + oldPathSuffix
+			const fullRange = new vscode.Range(
+				document.positionAt(0),
+				document.positionAt(text.length)
+			)
+			if (oldServiceVariable == newServiceVariable) {
+				// Keep the old variable
+				const newText = text.replaceAll(oldGivenPath, oldServiceVariable + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
+			} else if (newServiceVariable) {
+				// Replace it with the new one since it's a new service
+				const newText = text.replaceAll(oldGivenPath, newServiceVariable + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
+			} else {
+				// Directly require the service and include the path suffix
+				const newText = text.replaceAll(oldGivenPath, `game:GetService("${newServiceName}")` + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
 			}
-		} catch (err) {
-			console.error(err);
+			count++
+			console.log("[RePath] Successfully changed path")
+		} else if (text.includes(oldPath)) { // Case 2: Directly required
+			// Old Variable has been used
+			// Replace path
+			const fullRange = new vscode.Range(
+				document.positionAt(0),
+				document.positionAt(text.length)
+			)
+			if (oldServiceVariable == newServiceVariable && oldServiceVariable != null && newServiceVariable != null) {
+				// Keep the old variable
+				const newText = text.replaceAll(oldPath, oldServiceVariable + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
+			} else if (newServiceVariable) {
+				// Replace it with the new one since it's a new service
+				const newText = text.replaceAll(oldPath, newServiceVariable + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
+			} else {
+				// Directly require the service and include the path suffix
+				const newText = text.replaceAll(oldPath, `game:GetService("${newServiceName}")` + newPathSuffix)
+				edit.replace(fileUri, fullRange, newText)
+			}
+			count++
+			console.log("[RePath] Successfully changed path")
+		} else {
+			console.log("[RePath] Didn't find it. Continuing")
 		}
 	}
-	return count;
+
+	return count
 }

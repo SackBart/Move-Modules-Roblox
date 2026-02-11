@@ -1,25 +1,26 @@
 {
-	"name": "helloworld-sample",
-	"displayName": "helloworld-sample",
-	"description": "HelloWorld example for VS Code",
+	"name": "repath",
+	"displayName": "RePath Roblox",
+	"description": "An extension to not worry about moving module scripts",
 	"version": "0.0.1",
-	"publisher": "vscode-samples",
-	"repository": "https://github.com/Microsoft/vscode-extension-samples/helloworld-sample",
+	"publisher": "SackBart",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/SackBart/Move-Modules-Roblox.git"
+	},
 	"engines": {
 		"vscode": "^1.100.0"
 	},
 	"categories": [
-		"Other"
+		"Extension Packs"
 	],
-	"activationEvents": [],
+	"activationEvents": [
+		"workspaceContains:**/*.lua",
+		"workspaceContains:**/*.luau"
+	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
-			}
-		]
+		"commands": []
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -35,5 +36,9 @@
 		"eslint": "^9.13.0",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.0"
+	},
+	"dependencies": {
+		"axios": "^1.13.5",
+		"fast-xml-parser": "^5.3.5"
 	}
 }

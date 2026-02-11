@@ -1,27 +1,23 @@
-# Hello World Sample
+# RePath
 
-This is a Hello World example that shows you how to use VS Code API.
+![](Demo.gif)
 
-Guide for this sample: https://code.visualstudio.com/api/get-started/your-first-extension.
+An Extension that automatically changes all paths on other scripts when moving modules
 
-## Demo
+## How to use it
+The extension automatically runs when opening a roblox project
 
-![demo](demo.gif)
+## Requirements
+Needs Rojo with its `default.package.json` file.
 
-## VS Code API
+## Warning
+The repathing doesn't work on multiple nested variables:
 
-### `vscode` module
+```luau
+local Service = game:GetService("ServerScriptService")
+local SubPath = Service.sub.path
 
-- [`commands.registerCommand`](https://code.visualstudio.com/api/references/vscode-api#commands.registerCommand)
-- [`window.showInformationMessage`](https://code.visualstudio.com/api/references/vscode-api#window.showInformationMessage)
+local module = require(Service.SubPath.more.path)
+```
 
-### Contribution Points
 
-- [`contributes.commands`](https://code.visualstudio.com/api/references/contribution-points#contributes.commands)
-
-## Running the Sample
-
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View. This will:
-	- Start a task `npm: watch` to compile the code
-	- Run the extension in a new VS Code window
