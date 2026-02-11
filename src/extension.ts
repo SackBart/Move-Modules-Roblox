@@ -2,7 +2,16 @@ import * as vscode from 'vscode';
 import { convertToRobloxPath } from './PathResolver';
 import * as path from 'path';
 
-export function activate(context: vscode.ExtensionContext) {
+/**
+ * Activates the RePath extension.
+ * 
+ * @param _context - VS Code extension context (unused but required by API)
+ * 
+ * @remarks
+ * This extension automatically updates require() paths in Lua/Luau files
+ * when module scripts are moved or renamed in a Roblox project.
+ */
+export function activate(_context: vscode.ExtensionContext) {
 	console.log('RePath Is Online');
 
 	vscode.workspace.onDidRenameFiles(async (e) => {
@@ -41,25 +50,40 @@ export function activate(context: vscode.ExtensionContext) {
 			if (success) {
 				vscode.window.showInformationMessage(`RePath: Applied new path on ${changeCount} file` + (changeCount == 1 ? "" : "s"));
 			} else {
-				vscode.window.showErrorMessage("RePath: Couldn't refactor the paths")
+				vscode.window.showErrorMessage("RePath: Couldn't refactor the paths");
 			}
 		}
-	})
+	});
 }
 
+/**
+ * Performs refactoring of require() paths across all Lua/Luau files in the workspace.
+ * 
+ * @param oldPath - The old Roblox path (e.g., game:GetService("ServerScriptService").OldModule)
+ * @param newPath - The new Roblox path (e.g., game:GetService("ReplicatedStorage").NewModule)
+ * @param edit - VS Code workspace edit to accumulate changes
+ * @returns Number of files that were modified
+ * 
+ * @remarks
+ * This function handles two cases:
+ * 1. Variable-based requires: local SSS = game:GetService("ServerScriptService"); require(SSS.Module)
+ * 2. Direct requires: require(game:GetService("ServerScriptService").Module)
+ * 
+ * The function intelligently reuses existing service variables when possible.
+ */
 async function performRefactoring(
 	oldPath: string,
 	newPath: string,
 	edit: vscode.WorkspaceEdit
 ): Promise<number> {
-	const files = await vscode.workspace.findFiles('**/*.{lua,luau}', '**/node_modules/**')
+	const files = await vscode.workspace.findFiles('**/*.{lua,luau}', '**/node_modules/**');
 
-	let count = 0
+	let count = 0;
 
 	for (const fileUri of files) {
-		console.log(`[RePath] Looking at file ${fileUri.fsPath}`)
-		const document = await vscode.workspace.openTextDocument(fileUri)
-		const text = document.getText()
+		console.log(`[RePath] Looking at file ${fileUri.fsPath}`);
+		const document = await vscode.workspace.openTextDocument(fileUri);
+		const text = document.getText();
 
 		// Get the services and the path suffixes from the given paths
 		const serviceRegex = /^game:GetService\("([^"]+)"\)(.*)$/;
@@ -71,10 +95,10 @@ async function performRefactoring(
 			continue;
 		}
 
-		const oldServiceName = matchOld[1]
-		const oldPathSuffix = matchOld[2]
-		const newServiceName = matchNew[1]
-		const newPathSuffix = matchNew[2]
+		const oldServiceName = matchOld[1];
+		const oldPathSuffix = matchOld[2];
+		const newServiceName = matchNew[1];
+		const newPathSuffix = matchNew[2];
 
 		// Get the variables that require the services
 		const oldServiceRegex = new RegExp(`local\\s+([a-zA-Z_]\\w*)\\s*=\\s*game:GetService\\("${oldServiceName}"\\)`);
@@ -83,66 +107,66 @@ async function performRefactoring(
 		const matchOldVariable = oldServiceRegex.exec(text);
 		const matchNewVariable = newServiceRegex.exec(text);
 
-		let oldServiceVariable
-		let newServiceVariable
+		let oldServiceVariable;
+		let newServiceVariable;
 
 		if (matchOldVariable) {
-			oldServiceVariable = matchOldVariable[1]
+			oldServiceVariable = matchOldVariable[1];
 		}
 		if (matchNewVariable) {
-			newServiceVariable = matchNewVariable[1]
+			newServiceVariable = matchNewVariable[1];
 		}
 
 		// Look for the path that contains oldVariable.oldPathSuffix or game:GetService("oldServiceName").oldPathSuffix
 		if (oldServiceVariable != null && text.includes(oldServiceVariable + oldPathSuffix)) { // Case 1: Variable requiring Service which is then used inside require() 
 			// Old Variable has been used
 			// Replace path
-			const oldGivenPath = oldServiceVariable + oldPathSuffix
+			const oldGivenPath = oldServiceVariable + oldPathSuffix;
 			const fullRange = new vscode.Range(
 				document.positionAt(0),
 				document.positionAt(text.length)
-			)
+			);
 			if (oldServiceVariable == newServiceVariable) {
 				// Keep the old variable
-				const newText = text.replaceAll(oldGivenPath, oldServiceVariable + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldGivenPath, oldServiceVariable + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			} else if (newServiceVariable) {
 				// Replace it with the new one since it's a new service
-				const newText = text.replaceAll(oldGivenPath, newServiceVariable + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldGivenPath, newServiceVariable + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			} else {
 				// Directly require the service and include the path suffix
-				const newText = text.replaceAll(oldGivenPath, `game:GetService("${newServiceName}")` + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldGivenPath, `game:GetService("${newServiceName}")` + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			}
-			count++
-			console.log("[RePath] Successfully changed path")
+			count++;
+			console.log("[RePath] Successfully changed path");
 		} else if (text.includes(oldPath)) { // Case 2: Directly required
 			// Old Variable has been used
 			// Replace path
 			const fullRange = new vscode.Range(
 				document.positionAt(0),
 				document.positionAt(text.length)
-			)
+			);
 			if (oldServiceVariable == newServiceVariable && oldServiceVariable != null && newServiceVariable != null) {
 				// Keep the old variable
-				const newText = text.replaceAll(oldPath, oldServiceVariable + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldPath, oldServiceVariable + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			} else if (newServiceVariable) {
 				// Replace it with the new one since it's a new service
-				const newText = text.replaceAll(oldPath, newServiceVariable + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldPath, newServiceVariable + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			} else {
 				// Directly require the service and include the path suffix
-				const newText = text.replaceAll(oldPath, `game:GetService("${newServiceName}")` + newPathSuffix)
-				edit.replace(fileUri, fullRange, newText)
+				const newText = text.replaceAll(oldPath, `game:GetService("${newServiceName}")` + newPathSuffix);
+				edit.replace(fileUri, fullRange, newText);
 			}
-			count++
-			console.log("[RePath] Successfully changed path")
+			count++;
+			console.log("[RePath] Successfully changed path");
 		} else {
-			console.log("[RePath] Didn't find it. Continuing")
+			console.log("[RePath] Didn't find it. Continuing");
 		}
 	}
 
-	return count
+	return count;
 }
