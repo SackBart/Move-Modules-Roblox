@@ -1,9 +1,10 @@
 {
 	"name": "repath",
 	"displayName": "RePath Roblox",
-	"description": "An extension to not worry about moving module scripts",
-	"version": "0.0.1",
+	"description": "Makes moving module scripts easier",
+	"version": "0.0.2",
 	"publisher": "SackBart",
+	"icon": "Icon.png",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/SackBart/Move-Modules-Roblox.git"
