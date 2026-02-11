@@ -7,13 +7,13 @@ import { createIgnoreFile } from './IgnoreFileCreator';
 /**
  * Activates the RePath extension.
  * 
- * @param _context - VS Code extension context (unused but required by API)
+ * @param context - VS Code extension context 
  * 
  * @remarks
  * This extension automatically updates require() paths in Lua/Luau files
  * when module scripts are moved or renamed in a Roblox project.
  */
-export function activate(_context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 	console.log('RePath Is Online');
 
 	let disposable = vscode.commands.registerCommand('repath.createIgnore', () => {
