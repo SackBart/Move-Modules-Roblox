@@ -15,8 +15,8 @@ eslint.config.mjs
 # Build artifacts
 **/*.map
 
-# Dependencies
-node_modules/**
+# Dependencies, we need to ignore now
+# node_modules/**
 
 # Documentation (keep README.md)
 .git/**

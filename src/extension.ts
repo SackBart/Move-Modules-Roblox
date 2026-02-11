@@ -63,6 +63,8 @@ export function activate(context: vscode.ExtensionContext) {
 			} else {
 				vscode.window.showErrorMessage("RePath: Couldn't refactor the paths");
 			}
+		} else {
+			vscode.window.showInformationMessage("RePath: No files changed");
 		}
 	});
 }

@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 const IGNORE_NAME = ".repathignore";
 
 export async function createIgnoreFile() {
-    // 1. Workspace Ordner ermitteln
     let folder: vscode.WorkspaceFolder | undefined;
 
     if (!vscode.workspace.workspaceFolders) {
