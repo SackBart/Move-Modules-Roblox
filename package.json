@@ -2,7 +2,7 @@
 	"name": "repath",
 	"displayName": "RePath Roblox",
 	"description": "Makes moving module scripts easier",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"publisher": "SackBart",
 	"icon": "Icon.png",
 	"repository": {
@@ -15,6 +15,8 @@
 	"categories": [
 		"Extension Packs"
 	],
+	"keywords": ["Roblox", "RePath", "Refactoring", "Utility", "Util", "ModuleScript", "Script", "Moving"],
+	"pricing": "Free",
 	"activationEvents": [
 		"workspaceContains:**/*.lua",
 		"workspaceContains:**/*.luau"
@@ -26,7 +28,17 @@
 				"command": "repath.createIgnore",
 				"title": "Create a .repathignore File"
 			}
-		]
+		],
+		"configuration": {
+			"title": "RePath Settings",
+			"properties": {
+				"repath.notifyUserOnChanged": {
+					"type": "boolean",
+					"default": false,
+					"description": "Notifies the user whether they want to apply Refactoring when they move files"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

@@ -32,6 +32,12 @@ Will get their path changed. Multiple Folders and Scripts can be moved as well!
 
 Paths without require() will also change 
 
+### Setting for changing Files
+![](Demos/OnFileChangedSetting.gif)
+
+A setting that can be turned on or off. Use `strg + ,` to access the settings on VS Code and type RePath to find it!
+It sends a notification when changing files it will ask whether you want to refactor the paths or not
+
 ## Notes & Feedback
 I created this Extension to make code organization less punishing. Whether you’re doing a massive system refactor or just cleaning up a few folders, RePath saves you time.
 
