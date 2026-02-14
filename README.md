@@ -1,6 +1,6 @@
 # RePath
 
-![](Demos/Introduction.gif)
+![](https://raw.githubusercontent.com/SackBart/RePath-Roblox/main/Demos/Introduction.gif)
 
 RePath is an Extension that watches your Explorer. 
 When you move a ModuleScript to a new location, 
@@ -12,20 +12,20 @@ RePath automatically scans your scripts and updates the paths in your code to ma
 - **Refactoring Friendly:** Ideal for large scale projects where you need to change your code structure without breaking the game logic
 
 ### Automatic Variable Service Detection
-![](Demos/DynamicVariable.gif)
+![](https://raw.githubusercontent.com/SackBart/RePath-Roblox/main/Demos/DynamicVariable.gif)
 Variables containing Services (`local Service = game:GetService()`) get included on the update (When changing the location of any script):
 From `local module = require(game:GetService().path)` to `local module = require(Service.path)`
 
 If there's no variable, then it will require the module directly with `game:GetService()`
 
 ### .repathignore
-![](Demos/RepathIgnore.gif)
+![](https://raw.githubusercontent.com/SackBart/RePath-Roblox/main/Demos/RepathIgnore.gif)
 A file for excluding directories where you don't want to have things changed. 
 Useful for big packages. <br>
 Use the **command bar** from VS Code to create a blank .repathignore file!
 
 ### Multiple Files at once + Paths without require()
-![](Demos/MultipleFiles.gif)
+![](https://raw.githubusercontent.com/SackBart/RePath-Roblox/main/Demos/MultipleFiles.gif)
 
 You can also move Folders around and every script requiring the scripts inside that folder <br>
 Will get their path changed. Multiple Folders and Scripts can be moved as well!
@@ -33,7 +33,7 @@ Will get their path changed. Multiple Folders and Scripts can be moved as well!
 Paths without require() will also change 
 
 ### Setting for changing Files
-![](Demos/OnFileChangedSetting.gif)
+![](https://raw.githubusercontent.com/SackBart/RePath-Roblox/main/Demos/OnFileChangedSetting.gif)
 
 A setting that can be turned on or off. Use `strg + ,` to access the settings on VS Code and type RePath to find it!
 It sends a notification when changing files it will ask whether you want to refactor the paths or not

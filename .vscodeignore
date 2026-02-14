@@ -21,6 +21,7 @@ eslint.config.mjs
 # Documentation (keep README.md)
 .git/**
 .github/**
+Demos/
 
 # Test files
 **/test/**
