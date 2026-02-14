@@ -334,10 +334,8 @@ function parseVariablesToAbsoluteMap(text: string): Map<string, string> {
     const globalVarMap = new Map<string, string>();
     const lines = text.split(/\r?\n/);
 
-    // Regex für: local varName = Wert
     const assignRegex = /^\s*local\s+([a-zA-Z_]\w*)\s*=\s*(.+)/;
 
-    // Regex um zu prüfen, ob es ein Service ist
     const serviceRegex = /^game:GetService\("([^"]+)"\)(.*)$/;
 
     for (const line of lines) {
@@ -348,46 +346,28 @@ function parseVariablesToAbsoluteMap(text: string): Map<string, string> {
         const varName = match[1];
         let rawValue = match[2];
 
-        // 1. Cleanup: Kommentare und Semikolons entfernen
         if (rawValue.includes("--")) rawValue = rawValue.split("--")[0];
         rawValue = rawValue.trim();
         if (rawValue.endsWith(";")) rawValue = rawValue.slice(0, -1).trim();
 
-        // JETZT KOMMT DIE LOGIK:
-
-        // Fall A: Es ist direkt ein Service (Base Case)
-        // z.B. local Service = game:GetService("ServerScriptService")
         if (rawValue.match(serviceRegex)) {
             globalVarMap.set(varName, rawValue);
-            continue; // Fertig mit dieser Variable
+            continue; 
         }
-
-        // Fall B: Es referenziert eine Variable, die wir schon kennen (Recursive Case)
-        // z.B. local Test3 = Service.Test3
-        
-        // Wir splitten bei Punkten: "Service.Test3" -> ["Service", "Test3"]
         const parts = rawValue.split('.');
-        const potentialBaseVar = parts[0]; // "Service"
+        const potentialBaseVar = parts[0];
 
         if (globalVarMap.has(potentialBaseVar)) {
-            // AHA! Wir kennen "Service". Holen wir uns den echten Pfad.
             const absoluteBasePath = globalVarMap.get(potentialBaseVar)!;
             
-            // Den Rest des Pfades wieder anhängen (.Test3)
             const restOfPath = parts.slice(1).join('.');
             
-            // Zusammenbauen: "game:GetService("SSS")" + "." + "Test3"
             const finalAbsolutePath = restOfPath 
                 ? `${absoluteBasePath}.${restOfPath}` 
                 : absoluteBasePath;
 
             globalVarMap.set(varName, finalAbsolutePath);
         }
-        
-        // Fall C: Es ist etwas anderes (require, {}, Zahlen, Strings)
-        // Da wir im `if` oben nichts gemacht haben, wird es NICHT in die Map aufgenommen.
-        // require(...) beginnt mit "require", das ist nicht in der Map -> wird ignoriert.
-        // {} beginnt mit "{", ist nicht in der Map -> wird ignoriert.
     }
 
     return globalVarMap;
